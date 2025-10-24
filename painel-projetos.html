@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Monitoramento de Projetos</title>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        /* --- Configuração Global --- */
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+            color: #333;
+            background-color: #f4f7fa;
+            overflow: hidden; /* Previne scroll da página inteira */
+        }
+        * { box-sizing: border-box; }
+
+        /* --- Layout Principal --- */
+        .system-container {
+            display: flex;
+            height: 100vh;
+        }
+        .sidebar {
+            width: 280px;
+            background-color: #1e3a5f; /* Cor escura para a barra lateral */
+            color: white;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+        .sidebar-header {
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+            text-align: center;
+        }
+        .sidebar-header h2 {
+            margin: 0;
+            font-size: 1.4rem;
+        }
+        #main-nav {
+            overflow-y: auto; /* Permite scroll na navegação se houver muitos itens */
+            flex-grow: 1;
+        }
+        #main-nav ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+        /* --- Estilo das ABAS (Tabs) --- */
+        #main-nav li a {
+            display: block;
+            padding: 15px 20px;
+            color: #e0e0e0;
+            text-decoration: none;
+            border-radius: 8px;
+            margin-bottom: 5px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        #main-nav li a:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        #main-nav li a.active {
+            background-color: #ffffff;
+            color: #1e3a5f;
+            font-weight: 700;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .sidebar-footer {
+            margin-top: auto;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.2);
+            flex-shrink: 0; /* Garante que o footer não encolha */
+        }
+        .btn-action {
+            width: 100%;
+            padding: 12px;
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            margin-bottom: 10px;
+        }
+        .btn-action:hover { background-color: #45a049; }
+        .btn-danger { background-color: #c82333; }
+        .btn-danger:hover { background-color: #a51c29; }
+        .btn-danger:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+
+        /* --- Área de Conteúdo --- */
+        .content-area {
+            flex-grow: 1;
+            padding: 40px;
+            overflow-y: auto;
+            height: 100vh; /* Garante que o scroll seja apenas aqui */
+        }
+        .content-header {
+            margin-bottom: 30px;
+        }
+        .content-header h1 {
+            font-size: 2.2rem;
+            color: #1e3a5f;
+            margin: 0 0 5px 0;
+        }
+        .content-header p {
+            font-size: 1.1rem;
+            color: #5a718c;
+            margin: 0;
+        }
+
+        /* --- Ocultar Conteúdo (para as Abas) --- */
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* --- Cards de Métrica --- */
+        .metrics-grid {
+            display: grid;
+            /* Seis colunas, ou menos em telas pequenas */
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .metric-card {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #dbe3f0;
+            box-shadow: 0 4px 12px rgba(0,20,60,0.05);
+            text-align: center;
+        }
+        .metric-card .label {
+            font-size: 0.9rem;
+            color: #5a718c;
+            margin-bottom: 8px;
+        }
+        .metric-card .value {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #1e3a5f;
+        }
+        .metric-card .value.green { color: #28a745; }
+        .metric-card .value.red { color: #dc3545; }
+        .metric-card .value.orange { color: #ffc107; }
+
+        /* --- Formulário de Edição --- */
+        .edit-form {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,20,60,0.05);
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+        .form-group label {
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        .form-group input[type="text"],
+        .form-group input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            font-size: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-family: 'Poppins', sans-serif;
+        }
+        .form-group input:read-only {
+            background-color: #e9ecef;
+            cursor: not-allowed;
+        }
+        #save-status {
+            margin-top: 15px;
+            font-weight: 600;
+            text-align: right;
+            visibility: hidden;
+        }
+        #save-status.visible { visibility: visible; }
+    </style>
+    </head>
+<body>
+
+    <div class="system-container">
+        <aside class="sidebar">
+            <header class="sidebar-header">
+                <h2>Projetos</h2>
+            </header>
+            
+            <nav id="main-nav">
+                <ul>
+                    <li><a data-id="loading">Carregando...</a></li>
+                </ul>
+            </nav>
+
+            <div class="sidebar-footer">
+                <button id="btn-novo-projeto" class="btn-action">Novo Projeto</button>
+                <button id="btn-excluir-projeto" class="btn-action btn-danger" disabled>Excluir Projeto</button>
+            </div>
+        </aside>
+
+        <main id="content-area" class="content-area">
+            <div class="content-header">
+                <h1>Bem-vindo!</h1>
+                <p>Selecione um projeto na barra lateral para começar.</p>
+            </div>
+        </main>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+
+        // ==================================================================
+        // CONFIGURAÇÃO (ATUALIZE AQUI!)
+        // ==================================================================
+        
+        // 1. Cole a URL do seu Bin (apenas o ID de 24 caracteres)
+        const JSONBIN_ID = '68fbc8ffd0ea881f40b8f006'; 
+        
+        // 2. Cole sua Chave de API Mestra
+        const API_KEY = '$2a$10$L4n/qlQ8LGkgQmd9p7zhaOAK6j5pgA.2Tq7xK019hUqDGNfPmqJ5O'; 
+
+        const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_ID}`;
+        const JSONBIN_URL_LATEST = `${JSONBIN_URL}/latest`;
+        
+        // ==================================================================
+        // VARIÁVEIS GLOBAIS
+        // ==================================================================
+        
+        let database = { projetos: [] }; // Nosso cache de dados local
+        let saveTimeout; // Timer para salvar e evitar escritas duplicadas
+        
+        // Elementos do DOM
+        const navList = document.querySelector('#main-nav ul');
+        const contentArea = document.getElementById('content-area');
+        const btnNovoProjeto = document.getElementById('btn-novo-projeto');
+        const btnExcluirProjeto = document.getElementById('btn-excluir-projeto');
+
+        // ==================================================================
+        // FUNÇÕES DE DADOS (CARREGAR E SALVAR)
+        // ==================================================================
+
+        /**
+         * Carrega os dados mais recentes do JSONBin
+         */
+        async function carregarDados() {
+            try {
+                // Usamos '/latest' para obter a versão mais recente
+                const response = await fetch(JSONBIN_URL_LATEST, {
+                    headers: { 'X-Master-Key': API_KEY }
+                });
+
+                if (response.status === 404) {
+                    // O Bin está vazio ou é novo.
+                    console.warn("JSONBin está vazio. Iniciando com dados padrão.");
+                    database = { projetos: [] };
+                    // Força a criação do bin inicial
+                    // Esta função agora é 'awaitable' (espera a conclusão)
+                    await salvarDados(true); 
+                    // Como salvarDados(true) já renderiza a tela, podemos parar aqui.
+                    return;
+                } else if (!response.ok) {
+                    throw new Error(`Falha na rede: ${response.status} ${response.statusText}`);
+                } else {
+                    const data = await response.json();
+                    database = data.record; // A resposta do JSONBin armazena nossos dados em 'record'
+                    if (!database.projetos) database.projetos = [];
+                }
+
+                // Após carregar, redesenha a tela
+                gerarNavegacao();
+                
+                // Se houver projetos, mostra o primeiro. Senão, mostra a tela de "novo"
+                if (database.projetos.length > 0) {
+                    mostrarPaginaProjeto(database.projetos[0].id);
+                    // Ativa o primeiro link na navegação
+                    ativarLinkNav(database.projetos[0].id);
+                } else {
+                    mostrarTelaNovoProjeto(true); // Mostra a tela de "novo projeto"
+                }
+
+            } catch (error) {
+                console.error("Erro fatal ao carregar dados:", error);
+                // O erro "Falha ao salvar" vem da função salvarDados,
+                // mas se o erro for ao *carregar* (ex: chave errada), mostramos aqui.
+                if (error.message.includes("401")) {
+                     contentArea.innerHTML = `<h1>Erro de Autenticação</h1><p>A Chave de API (API_KEY) está incorreta ou expirou. Verifique o código.</p>`;
+                } else if (error.message.includes("404")) {
+                     contentArea.innerHTML = `<h1>Erro 404</h1><p>O Bin ID (JSONBIN_ID) está incorreto. Verifique o código.</p>`;
+                } else {
+                     contentArea.innerHTML = `<h1>Erro ao Carregar</h1><p>${error.message}. Verifique o console para detalhes.</p>`;
+                }
+            }
+        }
+
+        /**
+         * Salva o objeto 'database' inteiro de volta no JSONBin
+         * @param {boolean} forceUpdate - Se true, atualiza a tela após salvar
+         * @returns {Promise<void>}
+         */
+        function salvarDados(forceUpdate = false) {
+            clearTimeout(saveTimeout);
+            
+            const activeId = navList.querySelector('a.active')?.dataset.id;
+            const statusDiv = document.getElementById('save-status');
+            if(statusDiv) {
+                statusDiv.textContent = 'Salvando...';
+                statusDiv.style.color = 'blue';
+                statusDiv.classList.add('visible');
+            }
+
+            // --- MELHORIA ARQUITETURAL ---
+            // Retorna uma Promise para que possamos usar 'await' na função carregarDados
+            // e garantir que o bin inicial seja criado antes de continuar.
+            return new Promise((resolve, reject) => {
+                saveTimeout = setTimeout(async () => {
+                    console.log("Salvando dados no JSONBin...");
+                    try {
+                        // Verifica se as chaves estão preenchidas
+                        if (JSONBIN_ID === 'COLE_O_ID_DO_SEU_BIN_AQUI' || API_KEY === 'COLE_SUA_CHAVE_DE_API_MESTRA_AQUI') {
+                            throw new Error("JSONBIN_ID ou API_KEY não foram configurados no código.");
+                        }
+
+                        const response = await fetch(JSONBIN_URL, {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-Master-Key': API_KEY
+                            },
+                            body: JSON.stringify(database) // Envia o banco de dados inteiro
+                        });
+
+                        if (!response.ok) {
+                            // Captura erros específicos do JSONBin
+                            if (response.status === 401) throw new Error("Chave de API (API_KEY) inválida.");
+                            if (response.status === 404) throw new Error("Bin ID (JSONBIN_ID) não encontrado.");
+                            throw new Error(`Falha ao salvar: ${response.statusText} (${response.status})`);
+                        }
+                        console.log("Dados salvos com sucesso!");
+
+                        if(statusDiv) {
+                            statusDiv.textContent = 'Salvo com sucesso!';
+                            statusDiv.style.color = 'green';
+                        }
+
+                        // Se forçarmos a atualização (ex: ao criar/excluir),
+                        // redesenhamos a navegação e a página
+                        if (forceUpdate) {
+                            gerarNavegacao();
+                            // Se tínhamos um ID ativo e ele ainda existe, reabre ele
+                            if (activeId && database.projetos.find(p => p.id === activeId)) {
+                                 mostrarPaginaProjeto(activeId);
+                                 ativarLinkNav(activeId);
+                            } else if (database.projetos.length > 0) {
+                                // Se o projeto ativo foi excluído, mostra o primeiro
+                                mostrarPaginaProjeto(database.projetos[0].id);
+                                ativarLinkNav(database.projetos[0].id);
+                            } else {
+                                // Não há mais projetos, mostra a tela de "novo"
+                                mostrarTelaNovoProjeto(true);
+                            }
+                        }
+                        
+                        resolve(); // Resolve a Promise com sucesso
+
+                    } catch (error) {
+                        console.error("Erro ao salvar:", error);
+                        if(statusDiv) {
+                            statusDiv.textContent = `Erro ao salvar: ${error.message}`;
+                            statusDiv.style.color = 'red';
+                        } else {
+                            // Este é o 'alert' que você viu
+                            alert("Erro ao salvar: "ax + error.message);
+                        }
+                        reject(error); // Rejeita a Promise com o erro
+                    } finally {
+                        // Esconde a mensagem "salvando" após um tempo
+                        setTimeout(() => {
+                            if(statusDiv) statusDiv.classList.remove('visible');
+                        }, 2000);
+                    }
+                }, 1000); // Espera 1 segundo após a última mudança para salvar
+            });
+        }
+
+        // ==================================================================
+        // FUNÇÕES DE RENDERIZAÇÃO (DESENHAR A TELA)
+        // ==================================================================
+
+        /**
+         * Gera os links (abas) na barra lateral
+         */
+        function gerarNavegacao() {
+            navList.innerHTML = ''; // Limpa a lista
+            if (database.projetos.length === 0) {
+                navList.innerHTML = '<li><a data-id="novo">Crie um projeto</a></li>';
+                return;
+            }
+
+            database.projetos
+                .sort((a, b) => a.nome.localeCompare(b.nome)) // Ordena por nome
+                .forEach(projeto => {
+                    navList.innerHTML += `
+                        <li><a data-id="${projeto.id}">${projeto.nome}</a></li>
+                    `;
+                });
+        }
+
+        /**
+         * Mostra os cards e o formulário de um projeto específico
+         * @param {string} projetoId - O ID do projeto a ser exibido
+         */
+        function mostrarPaginaProjeto(projetoId) {
+            const projeto = database.projetos.find(p => p.id === projetoId);
+            if (!projeto) {
+                console.error(`Projeto com ID ${projetoId} não encontrado.`);
+                // Se o projeto não for encontrado, mostra a tela de novo projeto
+                mostrarTelaNovoProjeto(true);
+                return;
+            }
+
+            // Garantimos que os valores sejam números
+            const total = parseInt(projeto.frentes_total) || 0;
+            const entregues = parseInt(projeto.frentes_entregues) || 0;
+            const analise = parseInt(projeto.em_analise) || 0;
+            const aprovados = parseInt(projeto.aprovados) || 0;
+            const reprovados = parseInt(projeto.reprovados) || 0;
+            
+            // Lógica de cálculo conforme sua solicitação
+            const pendentes = total - entregues;
+
+            contentArea.innerHTML = `
+                <div class="content-header">
+                    <h1>${projeto.nome}</h1>
+                    <p>Status detalhado do projeto.</p>
+                </div>
+                
+                <div id="${projeto.id}" class="tab-content active">
+                    
+                    <div class="metrics-grid">
+                        <figure class="metric-card">
+                            <figcaption class="label">Frentes do Contrato</figcaption>
+                            <div class="value">${total}</div>
+                        </figure>
+                        <figure class="metric-card">
+                            <figcaption class="label">Frentes Entregues</figcaption>
+                            <div class="value">${entregues}</div>
+                        </figure>
+                        <figure class="metric-card">
+                            <figcaption class="label">Em Análise</figcaption>
+                            <div class="value">${analise}</div>
+                        </figure>
+                        <figure class="metric-card">
+                            <figcaption class="label">Aprovados</figcaption>
+                            <div class="value green">${aprovados}</div>
+                        </figure>
+                        <figure class="metric-card">
+                            <figcaption class="label">Reprovados</figcaption>
+                            <div class="value red">${reprovados}</div>
+                        </figure>
+                        <figure class="metric-card">
+                            <figcaption class="label">Frentes Pendentes</figcaption>
+                            <div class="value orange">${pendentes}</div>
+                        </figure>
+                    </div>
+
+                    <form class="edit-form" data-id="${projeto.id}">
+                        <h2>Editar Dados</h2>
+                        <div class="form-grid">
+                            <div class="form-group full-width">
+                                <label for="nome">Nome do Projeto</label>
+                                <input type="text" id="nome" data-field="nome" value="${projeto.nome}">
+                            </div>
+                            <div class="form-group">
+                                <label for="frentes_total">Frentes do Contrato (Total)</label>
+                                <input type="number" id="frentes_total" data-field="frentes_total" value="${total}">
+                            </div>
+                            <div class="form-group">
+                                <label for="frentes_entregues">Frentes Entregues</label>
+                                <input type="number" id="frentes_entregues" data-field="frentes_entregues" value="${entregues}">
+                            </div>
+                            <div class="form-group">
+                                <label for="em_analise">Em Análise</label>
+                                <input type="number" id="em_analise" data-field="em_analise" value="${analise}">
+                            </div>
+                            <div class="form-group">
+                                <label for="aprovados">Aprovados</label>
+                                <input type="number" id="aprovados" data-field="aprovados" value="${aprovados}">
+                            </div>
+                            <div class="form-group">
+                                <label for="reprovados">Reprovados</label>
+                                <input type="number" id="reprovados" data-field="reprovados" value="${reprovados}">
+                            </div>
+                            <div class="form-group">
+                                <label for="pendentes">Frentes Pendentes (Calculado)</label>
+                                <input type="number" id="pendentes" value="${pendentes}" readonly>
+                            </div>
+                        </div>
+                        <div id="save-status"></div>
+                    </form>
+                </div>
+            `;
+            
+            // Habilita o botão de exclusão
+            btnExcluirProjeto.disabled = false;
+        }
+
+        /**
+         * Mostra a tela de criação de um novo projeto
+         * @param {boolean} isFirstTime - Se for o primeiro projeto
+         */
+        function mostrarTelaNovoProjeto(isFirstTime = false) {
+            contentArea.innerHTML = `
+                <div class="content-header">
+                    <h1>${isFirstTime ? 'Bem-vindo!' : 'Novo Projeto'}</h1>
+                    <p>Preencha os dados abaixo para criar um novo projeto.</p>
+                </div>
+                
+                <form class="edit-form" id="form-novo-projeto">
+                    <div class="form-grid">
+                        <div class="form-group full-width">
+                            <label for="nome">Nome do Projeto</label>
+                            <input type="text" id="nome" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="frentes_total">Frentes do Contrato (Total)</label>
+                            <input type="number" id="frentes_total" value="0">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-action">Salvar Novo Projeto</button>
+                    <div id="save-status"></div>
+                </form>
+            `;
+            
+            // Desabilita o botão de exclusão
+            btnExcluirProjeto.disabled = true;
+        }
+
+        /**
+         * Atualiza a classe 'active' na barra de navegação
+         * @param {string} projetoId - O ID do projeto a ser ativado
+         */
+        function ativarLinkNav(projetoId) {
+            // Remove 'active' de todos os links
+            navList.querySelectorAll('a').forEach(link => link.classList.remove('active'));
+            
+            // Adiciona 'active' ao link clicado
+            const linkAtivo = navList.querySelector(`a[data-id="${projetoId}"]`);
+            if (linkAtivo) {
+                linkAtivo.classList.add('active');
+            }
+        }
+        
+        // ==================================================================
+        // MANIPULADORES DE EVENTOS (HANDLERS)
+        // ==================================================================
+
+        /**
+         * Ouve cliques na barra de navegação (abas)
+         */
+        navList.addEventListener('click', (e) => {
+            e.preventDefault();
+            const link = e.target.closest('a'); // Garante que clicamos no <a>
+            if (!link) return;
+
+            const projetoId = link.dataset.id;
+            
+            if (projetoId === 'loading') return;
+
+            if (projetoId === 'novo') {
+                mostrarTelaNovoProjeto();
+            } else {
+                mostrarPaginaProjeto(projetoId);
+            }
+            
+            ativarLinkNav(projetoId);
+        });
+
+        /**
+         * Ouve cliques na área de conteúdo (para salvar formulários)
+         */
+        contentArea.addEventListener('input', (e) => {
+            // Usamos 'matches' para verificar se o evento veio de um input dentro do form de edição
+            if (e.target.matches('.edit-form input[data-field]')) {
+                const form = e.target.closest('form');
+                if (!form) return;
+                
+                const projetoId = form.dataset.id;
+                
+                const projeto = database.projetos.find(p => p.id === projetoId);
+                if (!projeto) return;
+
+                // Atualiza o objeto 'database' em tempo real
+                const field = e.target.dataset.field;
+                const value = e.target.type === 'number' ? parseInt(e.target.value) || 0 : e.target.value;
+                
+                if (projeto.hasOwnProperty(field)) {
+                    projeto[field] = value;
+                }
+
+                // Dispara o salvamento automático
+                salvarDados();
+                
+                // Atualiza o campo calculado (pendentes) em tempo real
+                if (field === 'frentes_total' || field === 'frentes_entregues') {
+                    const total = parseInt(form.querySelector('#frentes_total').value) || 0;
+                    const entregues = parseInt(form.querySelector('#frentes_entregues').value) || 0;
+                    form.querySelector('#pendentes').value = total - entregues;
+                }
+            }
+        });
+        
+        /**
+         * Ouve o 'submit' do formulário de NOVO projeto
+         */
+        contentArea.addEventListener('submit', (e) => {
+            e.preventDefault();
+            if (e.target.id === 'form-novo-projeto') {
+                const nome = e.target.querySelector('#nome').value;
+                const total = parseInt(e.target.querySelector('#frentes_total').value) || 0;
+
+                if (!nome.trim()) {
+                    alert("O nome do projeto é obrigatório.");
+                    return;
+                }
+
+                const novoProjeto = {
+                    id: `proj-${Date.now()}`, // ID único
+                    nome: nome,
+                    frentes_total: total,
+                    frentes_entregues: 0,
+                    em_analise: 0,
+                    aprovados: 0,
+                    reprovados: 0
+                    // O campo 'pendentes' não precisa ser salvo, é sempre calculado
+                };
+
+                database.projetos.push(novoProjeto);
+                
+                // Salva e força a atualização da UI (true)
+                // O await garante que o salvamento termine antes de tentar mostrar
+                salvarDados(true).then(() => {
+                    // Após salvar e redesenhar, ativa o novo projeto
+                    mostrarPaginaProjeto(novoProjeto.id);
+                    ativarLinkNav(novoProjeto.id);
+                });
+            }
+        });
+        
+        /**
+         * Ouve o clique no botão "Novo Projeto"
+         */
+        btnNovoProjeto.addEventListener('click', () => {
+            mostrarTelaNovoProjeto();
+            ativarLinkNav('novo');
+        });
+        
+        /**
+         * Ouve o clique no botão "Excluir Projeto"
+         */
+        btnExcluirProjeto.addEventListener('click', () => {
+            const linkAtivo = navList.querySelector('a.active');
+            if (!linkAtivo) return;
+            
+            const projetoId = linkAtivo.dataset.id;
+            if (!projetoId || projetoId === 'novo') return;
+            
+            const projeto = database.projetos.find(p => p.id === projetoId);
+            if (!projeto) return;
+
+            if (confirm(`Tem certeza que deseja excluir o projeto "${projeto.nome}"?\n\nEsta ação não pode ser desfeita.`)) {
+                // Filtra o projeto para fora do banco de dados
+                database.projetos = database.projetos.filter(p => p.id !== projetoId);
+                // Salva e força a atualização da UI (true)
+                salvarDados(true);
+            }
+        });
+
+
+        // ==================================================================
+        // INICIALIZAÇÃO
+        // ==================================================================
+        carregarDados();
+
+    });
+    </script>
+    </body>
+</html>
