@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel de Monitoramento de Projetos</title>
     
     <style>
@@ -243,11 +244,12 @@
         // ==================================================================
         
         // 1. Cole a URL do seu Bin (apenas o ID de 24 caracteres)
-        const JSONBIN_ID = '68fbc8ffd0ea881f40b8f006'; 
+        const JSONBIN_ID = 'COLE_O_ID_DO_SEU_BIN_AQUI'; // <-- APENAS O ID (ex: 68fbc8ffd0ea881f40b8f006)
         
         // 2. Cole sua Chave de API Mestra
-        const API_KEY = '$2a$10$L4n/qlQ8LGkgQmd9p7zhaOAK6j5pgA.2Tq7xK019hUqDGNfPmqJ5O'; 
+        const API_KEY = 'COLE_SUA_CHAVE_DE_API_MESTRA_AQUI'; // <-- A CHAVE LONGA (ex: $2a$10$...)
 
+        // (Não mude as linhas abaixo)
         const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_ID}`;
         const JSONBIN_URL_LATEST = `${JSONBIN_URL}/latest`;
         
@@ -345,7 +347,7 @@
                     console.log("Salvando dados no JSONBin...");
                     try {
                         // Verifica se as chaves estão preenchidas
-                        if (JSONBIN_ID === 'COLE_O_ID_DO_SEU_BIN_AQUI' || API_KEY === 'COLE_SUA_CHAVE_DE_API_MESTRA_AQUI') {
+                        if (JSONBIN_ID === '68fbc8ffd0ea881f40b8f006' || API_KEY === '$2a$10$L4n/qlQ8LGkgQmd9p7zhaOAK6j5pgA.2Tq7xK019hUqDGNfPmqJ5O') {
                             throw new Error("JSONBIN_ID ou API_KEY não foram configurados no código.");
                         }
 
@@ -398,7 +400,8 @@
                             statusDiv.style.color = 'red';
                         } else {
                             // Este é o 'alert' que você viu
-                            alert("Erro ao salvar: "ax + error.message);
+                            // **** ESTA É A LINHA QUE FOI CORRIGIDA ****
+                            alert("Erro ao salvar: " + error.message);
                         }
                         reject(error); // Rejeita a Promise com o erro
                     } finally {
@@ -696,6 +699,7 @@
             const projeto = database.projetos.find(p => p.id === projetoId);
             if (!projeto) return;
 
+            // **** ESTA É A OUTRA LINHA QUE FOI CORRIGIDA ****
             if (confirm(`Tem certeza que deseja excluir o projeto "${projeto.nome}"?\n\nEsta ação não pode ser desfeita.`)) {
                 // Filtra o projeto para fora do banco de dados
                 database.projetos = database.projetos.filter(p => p.id !== projetoId);
